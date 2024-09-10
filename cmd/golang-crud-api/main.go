@@ -31,14 +31,10 @@ func main() {
 	checkIsbnClient := clientsbook.NewCheckIsbnClient(checkIsbnClientHost)
 	// repositories
 	newCreateBookRepository := persistancebook.NewCreateBookRepository(db)
-	newGetAllBooksRepository := persistancebook.NewGetAllBooksRepository(db)
-	newGetBookRepository := persistancebook.NewGetBookRepository(db)
 	// services
 	createBookService := servicebook.NewCreateBookService(newCreateBookRepository, checkIsbnClient)
-	getAllBooksService := servicebook.NewGetAllBooksService(newGetAllBooksRepository)
-	newGetBookService := servicebook.NewGetBookService(newGetBookRepository)
 	// controllers
-	bookController := controllerbook.NewBookController(createBookService, getAllBooksService, newGetBookService)
+	bookController := controllerbook.NewBookController(createBookService)
 	// routes
 	controller.SetupRoutes(bookController)
 

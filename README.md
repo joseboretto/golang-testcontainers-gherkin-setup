@@ -51,7 +51,3 @@ curl --location --request POST 'http://localhost:8000/api/v1/createBook' \
     "isbn": "0-061-96436-0"
 }'
 ```
-2. [Get books](#get-books)
-```shell
-curl --location --request GET 'http://localhost:8000/api/v1/getBooks'
-```
