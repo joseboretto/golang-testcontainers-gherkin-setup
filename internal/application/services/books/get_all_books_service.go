@@ -13,7 +13,7 @@ func NewGetAllBooksService(repository GetAllBooksRepositoryInterface) *GetAllBoo
 }
 
 func (s *GetAllBooksService) GetAllBooks() ([]*models.Book, error) {
-	books, err := s.repository.SelectBookByIsbn()
+	books, err := s.repository.SelectAllBook()
 	if err != nil {
 		return nil, err
 	}

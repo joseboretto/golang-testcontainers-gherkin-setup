@@ -1,29 +1,59 @@
 package book
 
 import (
+	"errors"
 	"github.com/joseboretto/golang-crud-api/internal/domain/models"
-	"github.com/joseboretto/golang-crud-api/internal/infrastructure/persistance"
+	"gorm.io/gorm"
 )
 
 type CreateBookRepository struct {
-	database persistance.InMemoryKeyValueStorage
+	database *gorm.DB
 }
 
-func NewCreateBookRepository(database persistance.InMemoryKeyValueStorage) *CreateBookRepository {
+func NewCreateBookRepository(database *gorm.DB) *CreateBookRepository {
 	return &CreateBookRepository{
 		database: database,
 	}
 }
 
 func (c *CreateBookRepository) InsertBook(book *models.Book) (*models.Book, error) {
-	insert, err := c.database.Insert(book)
-	if err != nil {
-		return nil, err
+	// Map model to entity
+	bookEntity := BookEntity{
+		Isbn:       book.Isbn,
+		Title:      book.Title,
+		TotalPages: book.TotalPages,
+		Views:      book.Views,
+	}
+	// Insert entity
+	result := c.database.Create(&bookEntity)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	// Map entity to model
+	insert := &models.Book{
+		Isbn:       bookEntity.Isbn,
+		Title:      bookEntity.Title,
+		TotalPages: bookEntity.TotalPages,
+		Views:      bookEntity.Views,
 	}
 	return insert, nil
 }
 
 func (c *CreateBookRepository) SelectBookByIsbn(isbn string) (*models.Book, error) {
-	books, _ := c.database.SelectBookByIsbn(isbn)
-	return books, nil
+	bookEntity := BookEntity{}
+	result := c.database.Where("isbn = ?", isbn).First(&bookEntity)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	// Map entity to model
+	book := &models.Book{
+		Isbn:       bookEntity.Isbn,
+		Title:      bookEntity.Title,
+		TotalPages: bookEntity.TotalPages,
+		Views:      bookEntity.Views,
+	}
+	return book, nil
 }

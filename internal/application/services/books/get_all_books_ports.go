@@ -7,5 +7,5 @@ type GetAllBooksServiceInterface interface {
 }
 
 type GetAllBooksRepositoryInterface interface {
-	SelectBookByIsbn() ([]*models.Book, error)
+	SelectAllBook() ([]*models.Book, error)
 }

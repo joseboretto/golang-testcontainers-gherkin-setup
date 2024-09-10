@@ -2,24 +2,36 @@ package book
 
 import (
 	"github.com/joseboretto/golang-crud-api/internal/domain/models"
-	"github.com/joseboretto/golang-crud-api/internal/infrastructure/persistance"
+	"gorm.io/gorm"
 )
 
 type GetBookRepository struct {
-	database persistance.InMemoryKeyValueStorage
+	database *gorm.DB
 }
 
-func NewGetBookRepository(database persistance.InMemoryKeyValueStorage) *GetBookRepository {
+func NewGetBookRepository(database *gorm.DB) *GetBookRepository {
 	return &GetBookRepository{
 		database: database,
 	}
 }
 
 func (c *GetBookRepository) SelectBookByIsbn(isbn string) (*models.Book, error) {
-	books, _ := c.database.SelectBookByIsbn(isbn)
-	return books, nil
+	//
+	var bookEntity BookEntity
+	tx := c.database.Find(&bookEntity).Where("isbn = ?", isbn)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	book := &models.Book{
+		Isbn:       bookEntity.Isbn,
+		Title:      bookEntity.Title,
+		TotalPages: bookEntity.TotalPages,
+		Views:      bookEntity.Views,
+	}
+	return book, nil
 }
 
 func (c *GetBookRepository) IncreaseBookViewsByIsbn(isbn string) {
-	c.database.IncreaseBookViewsByIsbn(isbn)
+	// TODO: Implement this method
 }

@@ -50,7 +50,7 @@ func (c *Controller) CreateBook(w http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request"))
+		w.Write([]byte("Bad Request. Method not allowed. POST required"))
 	}
 
 }
@@ -77,7 +77,7 @@ func (c *Controller) GetBooks(w http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request"))
+		w.Write([]byte("Bad Request. Method not allowed. GET required"))
 	}
 
 }
@@ -107,7 +107,7 @@ func (c *Controller) GetBookByIsbn(w http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request"))
+		w.Write([]byte("Bad Request. Method not allowed. GET required"))
 	}
 
 }
