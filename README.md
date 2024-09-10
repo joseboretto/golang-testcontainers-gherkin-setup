@@ -26,10 +26,11 @@ docker-compose up
 
 ```bash
 DATABASE_USER=user
-DATABASE_PASSWORD=user
+DATABASE_PASSWORD=password
 DATABASE_NAME=db
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
+CHECK_ISBN_CLIENT_HOST=https://my-json-server.typicode.com/joseboretto/golang-testcontainers-gherkin-setup
 ```
 
 3. Run the application

@@ -7,17 +7,27 @@ import (
 )
 
 type CreateBookService struct {
-	repository CreateBookRepositoryInterface
+	repository               CreateBookRepositoryInterface
+	checkIsbnClientInterface CheckIsbnClientInterface
 }
 
-func NewCreateBookService(repository CreateBookRepositoryInterface) *CreateBookService {
+func NewCreateBookService(repository CreateBookRepositoryInterface, checkIsbnClientInterface CheckIsbnClientInterface) *CreateBookService {
 	return &CreateBookService{
-		repository: repository,
+		repository:               repository,
+		checkIsbnClientInterface: checkIsbnClientInterface,
 	}
 }
 
 func (s *CreateBookService) CreateBook(book *models.Book) (*models.Book, error) {
-	// TODO: Add business logic here
+	// Check if ISBN is valid
+	isValid, err := s.checkIsbnClientInterface.CheckIsbn(book.Isbn)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, errors.New("isbn is not valid based on external service")
+	}
+	// Check if book already exist
 	exist, err := s.repository.SelectBookByIsbn(book.Isbn)
 	if err != nil {
 		return nil, err

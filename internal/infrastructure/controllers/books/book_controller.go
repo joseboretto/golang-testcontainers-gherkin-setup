@@ -1,6 +1,7 @@
 package books
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -30,6 +31,12 @@ func (c *Controller) CreateBook(w http.ResponseWriter, req *http.Request) {
 		err := utils.Decode(req, &createBookRequest)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			errorResponse := ErrorResponse{
+				Message: "Bad Request. Invalid payload",
+				Error:   err.Error(),
+			}
+			json.NewEncoder(w).Encode(errorResponse)
 			return
 		}
 
@@ -39,6 +46,12 @@ func (c *Controller) CreateBook(w http.ResponseWriter, req *http.Request) {
 		createBook, err := c.createBookServiceInterface.CreateBook(bookDomain)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			errorResponse := ErrorResponse{
+				Message: "Bad Request. Error creating book",
+				Error:   err.Error(),
+			}
+			json.NewEncoder(w).Encode(errorResponse)
 			return
 		}
 		// response
@@ -46,6 +59,13 @@ func (c *Controller) CreateBook(w http.ResponseWriter, req *http.Request) {
 
 		if err = utils.Response(w, createBookResponse, http.StatusOK); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+
+			w.Header().Set("Content-Type", "application/json")
+			errorResponse := ErrorResponse{
+				Message: "Internal Server Error",
+				Error:   err.Error(),
+			}
+			json.NewEncoder(w).Encode(errorResponse)
 			return
 		}
 	} else {
