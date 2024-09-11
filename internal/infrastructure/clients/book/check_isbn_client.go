@@ -3,20 +3,15 @@ package book
 import (
 	"fmt"
 	"net/http"
-	"time"
 )
 
 type CheckIsbnClient struct {
-	httpClient    http.Client
+	httpClient    *http.Client
 	host          string
 	checkIsbnPath string
 }
 
-func NewCheckIsbnClient(host string) *CheckIsbnClient {
-	// Create a new http client
-	httpClient := http.Client{
-		Timeout: time.Second * 10,
-	}
+func NewCheckIsbnClient(host string, httpClient *http.Client) *CheckIsbnClient {
 	return &CheckIsbnClient{
 		httpClient:    httpClient,
 		host:          host,

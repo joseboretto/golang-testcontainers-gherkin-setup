@@ -7,7 +7,9 @@ import (
 	controllerbook "github.com/joseboretto/golang-crud-api/internal/infrastructure/controllers/books"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"os"
+	"time"
 
 	"log"
 	"net/http"
@@ -17,18 +19,30 @@ import (
 )
 
 func main() {
-	databaseConnectionString, db, err := getDatabaseConnection()
-	if err != nil {
-		panic("failed to connect database with error: " + err.Error() + "\n" + "Please check your database configuration: " + databaseConnectionString)
+	addr := ":8000"
+	httpClient := &http.Client{
+		Timeout: 5 * time.Second,
 	}
+	server, deferFn := httpServerSetup(addr, httpClient)
+	log.Println("Listing for requests at http://localhost" + addr)
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatal("Error staring the server on", err)
+		return
+	}
+	defer deferFn()
+}
+
+func httpServerSetup(addr string, httpClient *http.Client) (*http.Server, func()) {
+	db := getDatabaseConnection()
 	// Migrate the schema
-	err = db.AutoMigrate(&persistancebook.BookEntity{})
+	err := db.AutoMigrate(&persistancebook.BookEntity{})
 	if err != nil {
 		panic("Error executing db.AutoMigrate" + err.Error())
 	}
 	// Clients
 	checkIsbnClientHost := os.Getenv("CHECK_ISBN_CLIENT_HOST")
-	checkIsbnClient := clientsbook.NewCheckIsbnClient(checkIsbnClientHost)
+	checkIsbnClient := clientsbook.NewCheckIsbnClient(checkIsbnClientHost, httpClient)
 	// repositories
 	newCreateBookRepository := persistancebook.NewCreateBookRepository(db)
 	// services
@@ -37,12 +51,26 @@ func main() {
 	bookController := controllerbook.NewBookController(createBookService)
 	// routes
 	controller.SetupRoutes(bookController)
+	// Server
+	server := &http.Server{Addr: addr, Handler: nil}
+	// Defer function
+	// Add all defer
+	deferFn := func() {
+		// TODO: FIX IT
+		/*
+			 fmt.Println("closing database")
+				sqlDB, err := db.DB()
+				err = sqlDB.Close()
+				if err != nil {
+					panic("Error closing database connection: " + err.Error())
+				}
+		*/
 
-	log.Println("Listing for requests at http://localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	}
+	return server, deferFn
 }
 
-func getDatabaseConnection() (string, *gorm.DB, error) {
+func getDatabaseConnection() *gorm.DB {
 	// Read database configuration from environment variables
 	databaseUser := os.Getenv("DATABASE_USER")
 	databasePassword := os.Getenv("DATABASE_PASSWORD")
@@ -54,6 +82,14 @@ func getDatabaseConnection() (string, *gorm.DB, error) {
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  databaseConnectionString,
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
-	}), &gorm.Config{})
-	return databaseConnectionString, db, err
+	}), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "myschema.", // schema name
+			SingularTable: false,
+		}})
+	// Check if connection is successful
+	if err != nil {
+		panic("failed to connect database with error: " + err.Error() + "\n" + "Please check your database configuration: " + databaseConnectionString)
+	}
+	return db
 }

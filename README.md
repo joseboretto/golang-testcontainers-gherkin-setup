@@ -51,3 +51,9 @@ curl --location --request POST 'http://localhost:8000/api/v1/createBook' \
     "isbn": "0-061-96436-0"
 }'
 ```
+
+# External services
+1. [Check ISBN](#check-isbn)
+```shell
+curl --location --request GET 'https://my-json-server.typicode.com/joseboretto/golang-testcontainers-gherkin-setup/isbn/0-061-96436-1'
+```
