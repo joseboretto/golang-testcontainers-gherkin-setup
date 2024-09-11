@@ -40,8 +40,8 @@ Feature: Create book
     """
     Then response status code is 200 and payload is
     """json
- {
-    "isbn": "0-061-96436-1",
-    "title": "The Art of Computer Programming"
-}
+    {
+        "isbn": "0-061-96436-1",
+        "title": "The Art of Computer Programming"
+    }
     """

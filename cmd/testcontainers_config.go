@@ -62,7 +62,8 @@ func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
 	initPostgresContainer(ctx, params)
 	// Mock the third-party API client
 	mockClient := &http.Client{}
-	httpmock.ActivateNonDefault(mockClient)
+	httpmock.Activate()
+	// httpmock.ActivateNonDefault(mockClient)
 	// Build the app
 	server, _ := mainHttpServerSetup(params.MainHttpServerAddress, mockClient)
 	return &TestContainersContext{
