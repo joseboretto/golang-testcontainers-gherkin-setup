@@ -6,5 +6,10 @@
     {
       "id": "0-061-96436-1"
     }
+  ],
+  "sendEmail": [
+    {
+      "id": "helloworld@gmail.com"
+    }
   ]
 }
