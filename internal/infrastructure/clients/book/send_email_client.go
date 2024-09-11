@@ -25,10 +25,8 @@ func NewSendEmailClient(host string, httpClient *http.Client) *SendEmailClient {
 
 type SendEmailBookRequestBody struct {
 	// Isbn: International Standard Book Number
-	Isbn       string `json:"isbn"`
-	Title      string `json:"title"`
-	TotalPages int    `json:"total_pages"`
-	Views      int    `json:"views"`
+	Isbn  string `json:"isbn"`
+	Title string `json:"title"`
 }
 
 type SendEmailRequestBody struct {
@@ -41,10 +39,8 @@ func (c *SendEmailClient) SendEmail(email string, book *models.Book) error {
 	sendEmailRequestBody := SendEmailRequestBody{
 		Email: email,
 		Book: SendEmailBookRequestBody{
-			Isbn:       book.Isbn,
-			Title:      book.Title,
-			TotalPages: book.TotalPages,
-			Views:      book.Views,
+			Isbn:  book.Isbn,
+			Title: book.Title,
 		},
 	}
 	sendEmailRequestBodyJson, err := json.Marshal(sendEmailRequestBody)

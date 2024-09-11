@@ -13,6 +13,5 @@ func (s *StepsContext) executeSQL(sqlCommand string) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-
 	return nil
 }

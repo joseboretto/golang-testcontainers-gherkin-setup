@@ -1,4 +1,4 @@
-Feature: getProductExportV2
+Feature: Create book
 
   Background: Clean database
     Given SQL command
@@ -21,9 +21,7 @@ Feature: getProductExportV2
       "email" : "helloworld@gmail.com",
       "book" : {
         "isbn" : "0-061-96436-1",
-        "title" : "The Art of Computer Programming",
-        "total_pages" : 0,
-        "views" : 0
+        "title" : "The Art of Computer Programming"
       }
     }
     """
@@ -44,7 +42,6 @@ Feature: getProductExportV2
     """json
  {
     "isbn": "0-061-96436-1",
-    "title": "The Art of Computer Programming",
-    "total_pages": 0
+    "title": "The Art of Computer Programming"
 }
     """

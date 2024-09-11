@@ -57,16 +57,12 @@ func mainHttpServerSetup(addr string, httpClient *http.Client) (*http.Server, fu
 	// Defer function
 	// Add all defer
 	deferFn := func() {
-		fmt.Println("deferFn executed")
-		// TODO: FIX IT
-		/*
-			 fmt.Println("closing database")
-				sqlDB, err := db.DB()
-				err = sqlDB.Close()
-				if err != nil {
-					panic("Error closing database connection: " + err.Error())
-				}
-		*/
+		fmt.Println("closing database connection")
+		sqlDB, err := db.DB()
+		err = sqlDB.Close()
+		if err != nil {
+			panic("Error closing database connection: " + err.Error())
+		}
 
 	}
 	return server, deferFn
