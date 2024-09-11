@@ -11,8 +11,8 @@ type StepsContext struct {
 	mainHttpServerUrl string // http://localhost:8000
 	database          *gorm.DB
 	// Mock server setup
-	stepMockServerRequestMethod string
-	stepMockServerRequestUrl    string
+	stepMockServerRequestMethod *string
+	stepMockServerRequestUrl    *string
 	stepMockServerRequestBody   *string
 	stepResponse                *http.Response
 }
