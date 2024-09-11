@@ -23,17 +23,16 @@ func main() {
 	httpClient := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	server, deferFn := httpServerSetup(addr, httpClient)
+	server, deferFn := mainHttpServerSetup(addr, httpClient)
 	log.Println("Listing for requests at http://localhost" + addr)
 	err := server.ListenAndServe()
 	if err != nil {
-		log.Fatal("Error staring the server on", err)
-		return
+		panic("Error staring the server: " + err.Error())
 	}
 	defer deferFn()
 }
 
-func httpServerSetup(addr string, httpClient *http.Client) (*http.Server, func()) {
+func mainHttpServerSetup(addr string, httpClient *http.Client) (*http.Server, func()) {
 	db := getDatabaseConnection()
 	// Migrate the schema
 	err := db.AutoMigrate(&persistancebook.BookEntity{})
@@ -56,6 +55,7 @@ func httpServerSetup(addr string, httpClient *http.Client) (*http.Server, func()
 	// Defer function
 	// Add all defer
 	deferFn := func() {
+		fmt.Println("deferFn executed")
 		// TODO: FIX IT
 		/*
 			 fmt.Println("closing database")

@@ -32,7 +32,7 @@ func (s *StepsContext) apiRequestIsSendWithPayload(method, url, payloadJson stri
 	// Create a new HTTP request
 	req, err := http.NewRequestWithContext(context.Background(),
 		method,
-		s.apiBaseUrl+url,
+		s.mainHttpServerUrl+url,
 		bytes.NewBufferString(payloadJson))
 	if err != nil {
 		return fmt.Errorf("failed to create a new HTTP request: %w", err)
@@ -47,22 +47,22 @@ func (s *StepsContext) apiRequestIsSendWithPayload(method, url, payloadJson stri
 		return fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
 	// store the response in the context
-	s.ResponseData = response
+	s.responseData = response
 
 	return nil
 }
 
 func (s *StepsContext) httpStatusIsEqualTo(expected int) error {
-	if s.ResponseData.StatusCode != expected {
-		fmt.Println("Response:" + getBody(s.ResponseData))
-		return fmt.Errorf("httpStatusIsEqualTo: Expected %d but got %d", expected, s.ResponseData.StatusCode)
+	if s.responseData.StatusCode != expected {
+		fmt.Println("Response:" + getBody(s.responseData))
+		return fmt.Errorf("httpStatusIsEqualTo: Expected %d but got %d", expected, s.responseData.StatusCode)
 	}
 
 	return nil
 }
 
 func (s *StepsContext) responseBodyIsEqualTo(expectedJson string) error {
-	actualJson := getBody(s.ResponseData)
+	actualJson := getBody(s.responseData)
 	var obj1, obj2 map[string]interface{}
 	err1 := json.Unmarshal([]byte(expectedJson), &obj1)
 	err2 := json.Unmarshal([]byte(actualJson), &obj2)

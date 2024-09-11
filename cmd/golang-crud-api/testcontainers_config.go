@@ -18,79 +18,76 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var appAddr = ":8000"
-
-type TestcontainersConfig struct {
-	App               *http.Server
-	PostgresContainer *postgres.PostgresContainer
-	DeferFn           func()
+type TestContainersParams struct {
+	MainHttpServerAddress  string
+	PostgresImage          string
+	DatabaseName           string
+	DatabaseHostEnvVar     string
+	DatabasePortEnvVar     string
+	DatabaseUserEnvVar     string
+	DatabasePasswordEnvVar string
+	DatabaseNameEnvVar     string
+	EnvironmentVariables   map[string]string
 }
 
-func GetTestcontainersConfig(ctx context.Context) *TestcontainersConfig {
-	// todo: check if we need a singleton when multiple tests are running
-	return mainWithTestContainers(ctx)
+type TestContainersContext struct {
+	MainHttpServer *http.Server
+	Params         *TestContainersParams
 }
 
-func (t TestcontainersConfig) TerminateAllContainers(ctx context.Context) {
-	terminateAllContainers(t.PostgresContainer, ctx)
+func NewTestContainersParams() *TestContainersParams {
+	return &TestContainersParams{
+		MainHttpServerAddress:  ":8000",
+		PostgresImage:          "docker.io/postgres:16-alpine",
+		DatabaseName:           "db",
+		DatabaseHostEnvVar:     "DATABASE_HOST",
+		DatabasePortEnvVar:     "DATABASE_PORT",
+		DatabaseUserEnvVar:     "DATABASE_USER",
+		DatabasePasswordEnvVar: "DATABASE_PASSWORD",
+		DatabaseNameEnvVar:     "DATABASE_NAME",
+		EnvironmentVariables: map[string]string{
+			"CHECK_ISBN_CLIENT_HOST": "https://api.mybiz.com",
+		},
+	}
 }
 
-func mainWithTestContainers(ctx context.Context) *TestcontainersConfig {
-	setAppEnvs()
-	postgresContainer := initPostgresContainer(ctx)
-	// Start the app
-	// Set the mock client
+func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
+	params := NewTestContainersParams()
+	// Set the environment variables
+	setAppEnvs(params)
+	// Start the postgres container
+	initPostgresContainer(ctx, params)
+	// Mock the third-party API client
 	mockClient := &http.Client{}
 	httpmock.ActivateNonDefault(mockClient)
-
-	server, deferFn := httpServerSetup(appAddr, mockClient)
-	defer deferFn()
-
-	go func() {
-		// Start and continue the execution.
-		log.Println("Listing for requests at http://localhost" + appAddr)
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Fatal("Error staring the server on", err)
-			return
-		}
-	}()
-	// Wait for the app to start
-	time.Sleep(2 * time.Second) //nolint:gomnd // non-critical
-	// Handle panic
-	defer func() {
-		if err := recover(); err != nil {
-			log.Println("panic occurred:", err)
-			terminateAllContainers(postgresContainer, ctx)
-		}
-	}()
-
-	return &TestcontainersConfig{
-		App:               server,
-		PostgresContainer: postgresContainer,
-		DeferFn:           deferFn,
+	// Build the app
+	server, _ := mainHttpServerSetup(params.MainHttpServerAddress, mockClient)
+	return &TestContainersContext{
+		MainHttpServer: server,
+		Params:         params,
 	}
 }
 
 // setAppEnvs sets the environment variables required by the app.
-func setAppEnvs() {
-	setenv("CHECK_ISBN_CLIENT_HOST", "https://api.mybiz.com")
+func setAppEnvs(params *TestContainersParams) {
+	for key, value := range params.EnvironmentVariables {
+		setenv(key, value)
+	}
 }
 
 // initPostgresContainer starts a postgres container and sets the required environment variables.
 // Source: https://golang.testcontainers.org/modules/postgres/
-func initPostgresContainer(ctx context.Context) *postgres.PostgresContainer {
-	dbName := "db"
+func initPostgresContainer(ctx context.Context, params *TestContainersParams) *postgres.PostgresContainer {
 	logTimeout := 10
 	port := "5432/tcp"
 	dbURL := func(host string, port nat.Port) string {
 		return fmt.Sprintf("postgres://postgres:postgres@%s:%s/%s?sslmode=disable", //nolint:nosprintfhostport // non-critical
-			host, port.Port(), dbName)
+			host, port.Port(), params.DatabaseName)
 	}
 
-	postgresContainer, err := postgres.Run(ctx, "docker.io/postgres:15.2-alpine",
+	postgresContainer, err := postgres.Run(ctx, params.PostgresImage,
 		postgres.WithInitScripts(filepath.Join(".", "testAssets", "testdata", "dev-db.sql")),
-		postgres.WithDatabase(dbName),
+		postgres.WithDatabase(params.DatabaseName),
 		testcontainers.WithWaitStrategy(wait.ForSQL(nat.Port(port), "postgres", dbURL).
 			WithStartupTimeout(time.Duration(logTimeout)*time.Second)),
 	)
@@ -98,12 +95,12 @@ func initPostgresContainer(ctx context.Context) *postgres.PostgresContainer {
 		log.Fatalf("failed to start postgresContainer: %s", err)
 	}
 	postgresHost, _ := postgresContainer.Host(ctx) //nolint:errcheck // non-critical
-	// Set envs. Source: persistence.Config + default postgres.RunContainer values
-	setenv("DATABASE_HOST", postgresHost)
-	setenv("DATABASE_PORT", getPostgresPort(ctx, postgresContainer))
-	setenv("DATABASE_USER", "postgres")
-	setenv("DATABASE_PASSWORD", "postgres")
-	setenv("DATABASE_NAME", dbName)
+	// Set envs
+	setenv(params.DatabaseHostEnvVar, postgresHost)
+	setenv(params.DatabasePortEnvVar, getPostgresPort(ctx, postgresContainer))
+	setenv(params.DatabaseUserEnvVar, "postgres")
+	setenv(params.DatabasePasswordEnvVar, "postgres")
+	setenv(params.DatabaseNameEnvVar, params.DatabaseName)
 	s, err := postgresContainer.ConnectionString(ctx)
 	log.Printf("Postgres container started at: %s", s)
 	if err != nil {
@@ -121,12 +118,6 @@ func getPostgresPort(ctx context.Context, postgresContainer *postgres.PostgresCo
 	}
 
 	return port.Port()
-}
-
-func terminateAllContainers(postgresContainer *postgres.PostgresContainer, ctx context.Context) {
-	if err := postgresContainer.Terminate(ctx); err != nil {
-		log.Fatalf("failed to terminate postgresContainer: %s", err)
-	}
 }
 
 func setenv(key, value string) {

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Function to initialize the steps for godog
+// RegisterMockServerSteps register all the step definition functions related to the mock server
 func (s *StepsContext) RegisterMockServerSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I setup a mock server for "([^"]*)" "([^"]*)" with response (\d+) and body$`, s.setupRegisterResponder)
 }
@@ -23,8 +23,6 @@ func (s *StepsContext) setupRegisterResponder(method, url string, statusCode int
 
 // Function to setup a custom matcher responder with httpmock using parameters
 func setupRegisterMatcherResponder(method, url, requestBody, responseBody string, statusCode, failureStatusCode int) error {
-	httpmock.Activate() // Activate httpmock
-
 	// Register a custom matcher responder
 	httpmock.RegisterResponder(method, url,
 		func(req *http.Request) (*http.Response, error) {

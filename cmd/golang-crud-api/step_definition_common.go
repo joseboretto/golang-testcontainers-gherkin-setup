@@ -1,20 +1,26 @@
 package main
 
 import (
+	"github.com/cucumber/godog"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 type StepsContext struct {
-	apiBaseUrl   string // http://localhost:8000
-	database     *gorm.DB
-	ResponseData *http.Response
+	mainHttpServerUrl string // http://localhost:8000
+	database          *gorm.DB
+	responseData      *http.Response
 }
 
-func NewStepsContext(apiBaseUrl string) *StepsContext {
+func NewStepsContext(mainHttpServerUrl string, sc *godog.ScenarioContext) *StepsContext {
 	db := getDatabaseConnection()
-	return &StepsContext{
-		apiBaseUrl: apiBaseUrl,
-		database:   db,
+	s := &StepsContext{
+		mainHttpServerUrl: mainHttpServerUrl,
+		database:          db,
 	}
+	// Register all the step definition function
+	s.RegisterMockServerSteps(sc)
+	s.RegisterDatabaseSteps(sc)
+	s.RegisterApiSteps(sc)
+	return s
 }
