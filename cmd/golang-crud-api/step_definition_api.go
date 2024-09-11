@@ -3,21 +3,19 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/cucumber/godog"
 	"io"
+	"log"
 	"net/http"
-	"reflect"
 	"time"
 )
 
 func (s *StepsContext) RegisterApiSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^API "([^"]*)" request is sent to "([^"]*)" without payload`, s.apiRequestIsSendWithoutPayload)
 	sc.Step(`^API "([^"]*)" request is sent to "([^"]*)" with payload`, s.apiRequestIsSendWithPayload)
-	sc.Step(`^response status code is (\d+)$`, s.httpStatusIsEqualTo)
-	sc.Step(`^response body is$`, s.responseBodyIsEqualTo)
+	sc.Step(`^response status code is (\d+) and payload is$`, s.apiResponseIs)
 }
 
 func (s *StepsContext) apiRequestIsSendWithoutPayload(method, url string) error {
@@ -47,39 +45,25 @@ func (s *StepsContext) apiRequestIsSendWithPayload(method, url, payloadJson stri
 		return fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
 	// store the response in the context
-	s.responseData = response
+	s.stepResponse = response
 
 	return nil
 }
 
-func (s *StepsContext) httpStatusIsEqualTo(expected int) error {
-	if s.responseData.StatusCode != expected {
-		fmt.Println("Response:" + getBody(s.responseData))
-		return fmt.Errorf("httpStatusIsEqualTo: Expected %d but got %d", expected, s.responseData.StatusCode)
+func (s *StepsContext) apiResponseIs(expected int, expectedResponse string) error {
+	if s.stepResponse.StatusCode != expected {
+		fmt.Println("Response:" + getBody(s.stepResponse))
+		return fmt.Errorf("apiResponseIs: Expected %d but got %d", expected, s.stepResponse.StatusCode)
 	}
 
-	return nil
-}
+	actualJson := getBody(s.stepResponse)
 
-func (s *StepsContext) responseBodyIsEqualTo(expectedJson string) error {
-	actualJson := getBody(s.responseData)
-	var obj1, obj2 map[string]interface{}
-	err1 := json.Unmarshal([]byte(expectedJson), &obj1)
-	err2 := json.Unmarshal([]byte(actualJson), &obj2)
-
-	if err1 != nil || err2 != nil {
-		return errors.New("error unmarshalling JSON")
+	if compare, err := compareJSON(expectedResponse, actualJson); err != nil {
+		return err
+	} else if !compare {
+		log.Printf("Actual respponse body without escapes: %s", actualJson)
+		return errors.New(fmt.Sprintf("Response body doesnt match. Expected body: %s, \n actual body: %v", expectedResponse, actualJson))
 	}
-	if !reflect.DeepEqual(obj1, obj2) {
-		actualJsonPretty, err := json.MarshalIndent(obj2, "", "    ")
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("responseBody is NOT equal to expected. Actual JSON response: \n %s", actualJsonPretty)
-
-	}
-
 	return nil
 }
 

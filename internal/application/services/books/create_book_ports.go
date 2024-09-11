@@ -17,3 +17,8 @@ type CreateBookRepositoryInterface interface {
 type CheckIsbnClientInterface interface {
 	CheckIsbn(isbn string) (bool, error)
 }
+
+// SendEmailClient Outbound port
+type SendEmailClientInterface interface {
+	SendEmail(email string, book *models.Book) error
+}

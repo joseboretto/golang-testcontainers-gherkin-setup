@@ -7,9 +7,14 @@ import (
 )
 
 type StepsContext struct {
+	// Main setup
 	mainHttpServerUrl string // http://localhost:8000
 	database          *gorm.DB
-	responseData      *http.Response
+	// Mock server setup
+	stepMockServerRequestMethod string
+	stepMockServerRequestUrl    string
+	stepMockServerRequestBody   *string
+	stepResponse                *http.Response
 }
 
 func NewStepsContext(mainHttpServerUrl string, sc *godog.ScenarioContext) *StepsContext {

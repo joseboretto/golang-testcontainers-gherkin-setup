@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"testing"
 	"time"
 
@@ -10,21 +11,32 @@ import (
 )
 
 func TestFeatures(t *testing.T) {
-	ctx := context.Background()
-	// Get testcontainersConfig
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Initialize test containers configuration
 	testcontainersConfig := NewMainWithTestContainers(ctx)
-	// Start the app within a goroutine to avoid blocking the test execution
+
+	// Channel to notify when the server is ready
+	serverReady := make(chan struct{})
+
+	// Start the HTTP server in a separate goroutine
 	go func() {
-		// Start and continue the execution.
-		log.Println("Listing for requests at http://localhost" + testcontainersConfig.Params.MainHttpServerAddress)
-		err := testcontainersConfig.MainHttpServer.ListenAndServe()
-		if err != nil {
-			log.Fatal("Error staring the server on", err)
-			return
+		log.Println("Listening for requests at http://localhost" + testcontainersConfig.Params.MainHttpServerAddress)
+		// Notify that the server is ready
+		close(serverReady)
+
+		if err := testcontainersConfig.MainHttpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Error starting the server: %v", err)
 		}
 	}()
-	// Wait for the app to start
-	time.Sleep(2 * time.Second)
+
+	// Wait for the server to start
+	<-serverReady
+
+	// Allow a brief moment for the server to initialize
+	time.Sleep(500 * time.Millisecond)
+
 	// Run the godog test suite
 	suite := godog.TestSuite{
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
@@ -34,11 +46,17 @@ func TestFeatures(t *testing.T) {
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"features"}, // Edit this path locally to execute only the feature files you want to test. (features/seller-catalog-stream/getProductsV2.feature)
+			Paths:    []string{"features"}, // Edit this path locally to execute only the feature files you want to test.
 			TestingT: t,                    // Testing instance that will run subtests.
 		},
 	}
+
 	if suite.Run() != 0 {
-		t.Fatal("non-zero status returned, failed to run feature tests")
+		t.Fatal("Non-zero status returned, failed to run feature tests")
+	}
+
+	// Gracefully shutdown the server after tests are done
+	if err := testcontainersConfig.MainHttpServer.Shutdown(ctx); err != nil {
+		log.Fatalf("Error shutting down the server: %v", err)
 	}
 }

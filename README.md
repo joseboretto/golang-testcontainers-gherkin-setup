@@ -53,7 +53,14 @@ curl --location --request POST 'http://localhost:8000/api/v1/createBook' \
 ```
 
 # External services
+This is a mock server. Check https://my-json-server.typicode.com/ for more information.
+
 1. [Check ISBN](#check-isbn)
 ```shell
 curl --location --request GET 'https://my-json-server.typicode.com/joseboretto/golang-testcontainers-gherkin-setup/isbn/0-061-96436-1'
+```
+
+1. [Send email](#send-email)
+```shell
+curl --location --request GET 'https://my-json-server.typicode.com/joseboretto/golang-testcontainers-gherkin-setup/sendEmail'
 ```

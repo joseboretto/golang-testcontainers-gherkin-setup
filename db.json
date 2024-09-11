@@ -7,9 +7,9 @@
       "id": "0-061-96436-1"
     }
   ],
-  "sendEmail": [
+  "send-email": [
     {
-      "id": "helloworld@gmail.com"
+      "status": "ok"
     }
   ]
 }

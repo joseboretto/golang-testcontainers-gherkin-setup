@@ -27,6 +27,7 @@ type TestContainersParams struct {
 	DatabaseUserEnvVar     string
 	DatabasePasswordEnvVar string
 	DatabaseNameEnvVar     string
+	DatabaseInitScript     string
 	EnvironmentVariables   map[string]string
 }
 
@@ -45,8 +46,10 @@ func NewTestContainersParams() *TestContainersParams {
 		DatabaseUserEnvVar:     "DATABASE_USER",
 		DatabasePasswordEnvVar: "DATABASE_PASSWORD",
 		DatabaseNameEnvVar:     "DATABASE_NAME",
+		DatabaseInitScript:     filepath.Join(".", "testAssets", "testdata", "dev-db.sql"),
 		EnvironmentVariables: map[string]string{
-			"CHECK_ISBN_CLIENT_HOST": "https://api.mybiz.com",
+			"CHECK_ISBN_CLIENT_HOST": "https://api.isbncheck.com",
+			"EMAIL_CLIENT_HOST":      "https://api.gmail.com",
 		},
 	}
 }
@@ -54,7 +57,7 @@ func NewTestContainersParams() *TestContainersParams {
 func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
 	params := NewTestContainersParams()
 	// Set the environment variables
-	setAppEnvs(params)
+	setEnvVars(params.EnvironmentVariables)
 	// Start the postgres container
 	initPostgresContainer(ctx, params)
 	// Mock the third-party API client
@@ -68,25 +71,18 @@ func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
 	}
 }
 
-// setAppEnvs sets the environment variables required by the app.
-func setAppEnvs(params *TestContainersParams) {
-	for key, value := range params.EnvironmentVariables {
-		setenv(key, value)
-	}
-}
-
 // initPostgresContainer starts a postgres container and sets the required environment variables.
 // Source: https://golang.testcontainers.org/modules/postgres/
 func initPostgresContainer(ctx context.Context, params *TestContainersParams) *postgres.PostgresContainer {
 	logTimeout := 10
 	port := "5432/tcp"
 	dbURL := func(host string, port nat.Port) string {
-		return fmt.Sprintf("postgres://postgres:postgres@%s:%s/%s?sslmode=disable", //nolint:nosprintfhostport // non-critical
+		return fmt.Sprintf("postgres://postgres:postgres@%s:%s/%s?sslmode=disable",
 			host, port.Port(), params.DatabaseName)
 	}
 
 	postgresContainer, err := postgres.Run(ctx, params.PostgresImage,
-		postgres.WithInitScripts(filepath.Join(".", "testAssets", "testdata", "dev-db.sql")),
+		postgres.WithInitScripts(params.DatabaseInitScript),
 		postgres.WithDatabase(params.DatabaseName),
 		testcontainers.WithWaitStrategy(wait.ForSQL(nat.Port(port), "postgres", dbURL).
 			WithStartupTimeout(time.Duration(logTimeout)*time.Second)),
@@ -95,12 +91,15 @@ func initPostgresContainer(ctx context.Context, params *TestContainersParams) *p
 		log.Fatalf("failed to start postgresContainer: %s", err)
 	}
 	postgresHost, _ := postgresContainer.Host(ctx) //nolint:errcheck // non-critical
-	// Set envs
-	setenv(params.DatabaseHostEnvVar, postgresHost)
-	setenv(params.DatabasePortEnvVar, getPostgresPort(ctx, postgresContainer))
-	setenv(params.DatabaseUserEnvVar, "postgres")
-	setenv(params.DatabasePasswordEnvVar, "postgres")
-	setenv(params.DatabaseNameEnvVar, params.DatabaseName)
+	// Set database environment variables
+	setEnvVars(map[string]string{
+		params.DatabaseHostEnvVar:     postgresHost,
+		params.DatabasePortEnvVar:     getPostgresPort(ctx, postgresContainer),
+		params.DatabaseUserEnvVar:     "postgres",
+		params.DatabasePasswordEnvVar: "postgres",
+		params.DatabaseNameEnvVar:     params.DatabaseName,
+	})
+
 	s, err := postgresContainer.ConnectionString(ctx)
 	log.Printf("Postgres container started at: %s", s)
 	if err != nil {
@@ -120,10 +119,11 @@ func getPostgresPort(ctx context.Context, postgresContainer *postgres.PostgresCo
 	return port.Port()
 }
 
-func setenv(key, value string) {
-	err := os.Setenv(key, value)
-
-	if err != nil {
-		log.Fatalf("error from setenv with %s:%s. error: %e", key, value, err)
+// setEnvVars sets environment variables from a map.
+func setEnvVars(envs map[string]string) {
+	for key, value := range envs {
+		if err := os.Setenv(key, value); err != nil {
+			log.Fatalf("Failed to set environment variable %s: %v", key, err)
+		}
 	}
 }

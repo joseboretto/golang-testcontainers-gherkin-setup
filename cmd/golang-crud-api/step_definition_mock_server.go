@@ -1,37 +1,65 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/jarcoal/httpmock"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
 )
 
 // RegisterMockServerSteps register all the step definition functions related to the mock server
 func (s *StepsContext) RegisterMockServerSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I setup a mock server for "([^"]*)" "([^"]*)" with response (\d+) and body$`, s.setupRegisterResponder)
+
+	ctx.Step(`^a mock server request with method: "([^"]*)" and url: "([^"]*)"$`, s.storeMockServerMethodAndUrlInStepContext)
+	ctx.Step(`^a mock server request with method: "([^"]*)" and url: "([^"]*)" and body$`, s.storeMockServerMethodAndUrlAndRequestBodyInStepContext)
+	ctx.Step(`^a mock server response with status (\d+) and body$`, s.setupRegisterResponder)
+	ctx.Step(`^reset mock server$`, s.resetMockServer)
+
 }
 
 // Function to setup a basic responder with httpmock using parameters
-func (s *StepsContext) setupRegisterResponder(method, url string, statusCode int, responseBody string) error {
-	// Register a basic responder
-	httpmock.RegisterResponder(method, url,
-		httpmock.NewStringResponder(statusCode, responseBody))
-
+func (s *StepsContext) storeMockServerMethodAndUrlInStepContext(method, url string) error {
+	s.stepMockServerRequestMethod = method
+	s.stepMockServerRequestUrl = url
+	s.stepMockServerRequestBody = nil
 	return nil
 }
 
-// Function to setup a custom matcher responder with httpmock using parameters
-func setupRegisterMatcherResponder(method, url, requestBody, responseBody string, statusCode, failureStatusCode int) error {
-	// Register a custom matcher responder
-	httpmock.RegisterResponder(method, url,
-		func(req *http.Request) (*http.Response, error) {
-			body, _ := ioutil.ReadAll(req.Body)
-			if string(body) == requestBody {
-				return httpmock.NewStringResponse(statusCode, responseBody), nil
-			}
-			return httpmock.NewStringResponse(failureStatusCode, `{"error": "invalid input"}`), nil
-		})
+func (s *StepsContext) storeMockServerMethodAndUrlAndRequestBodyInStepContext(method, url, body string) error {
+	s.stepMockServerRequestMethod = method
+	s.stepMockServerRequestUrl = url
+	s.stepMockServerRequestBody = &body
+	return nil
+}
 
+// Function to setup a basic responder with httpmock using parameters
+func (s *StepsContext) setupRegisterResponder(statusCode int, responseBody string) error {
+	if s.stepMockServerRequestBody != nil {
+		httpmock.RegisterResponder(s.stepMockServerRequestMethod, s.stepMockServerRequestUrl,
+			func(req *http.Request) (*http.Response, error) {
+				body, _ := io.ReadAll(req.Body)
+				// Compare json body
+				if compare, err := compareJSON(*s.stepMockServerRequestBody, string(body)); err != nil {
+					return nil, err
+				} else if !compare {
+					log.Printf("Actual request body without escapes: %s", body)
+					return nil, errors.New(fmt.Sprintf("Request body doesnt match for method: %s and url: %s. Expected body: %s, \n actual body: %v",
+						s.stepMockServerRequestMethod, s.stepMockServerRequestUrl, *s.stepMockServerRequestBody, string(body)))
+				} else {
+					return httpmock.NewStringResponse(statusCode, responseBody), nil
+				}
+			})
+	} else {
+		httpmock.RegisterResponder(s.stepMockServerRequestMethod, s.stepMockServerRequestUrl,
+			httpmock.NewStringResponder(statusCode, responseBody))
+	}
+	return nil
+}
+
+func (s *StepsContext) resetMockServer() error {
+	httpmock.Reset()
 	return nil
 }

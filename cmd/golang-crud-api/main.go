@@ -42,10 +42,12 @@ func mainHttpServerSetup(addr string, httpClient *http.Client) (*http.Server, fu
 	// Clients
 	checkIsbnClientHost := os.Getenv("CHECK_ISBN_CLIENT_HOST")
 	checkIsbnClient := clientsbook.NewCheckIsbnClient(checkIsbnClientHost, httpClient)
+	emailClientHost := os.Getenv("EMAIL_CLIENT_HOST")
+	sendEmailClient := clientsbook.NewSendEmailClient(emailClientHost, httpClient)
 	// repositories
 	newCreateBookRepository := persistancebook.NewCreateBookRepository(db)
 	// services
-	createBookService := servicebook.NewCreateBookService(newCreateBookRepository, checkIsbnClient)
+	createBookService := servicebook.NewCreateBookService(newCreateBookRepository, checkIsbnClient, sendEmailClient)
 	// controllers
 	bookController := controllerbook.NewBookController(createBookService)
 	// routes
