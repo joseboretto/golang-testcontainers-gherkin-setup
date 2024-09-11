@@ -15,12 +15,15 @@ entire system functions as intended when combined.
 
 1. **Cucumber**: A tool that supports Behavior-Driven Development (BDD). It allows you to write human-readable test
    scenarios in the Gherkin language, which bridges the gap between technical and non-technical stakeholders.
+   1. https://github.com/cucumber/godog
 2. **Testcontainers**: A library that provides lightweight, disposable containers for testing. It allows you to spin up
    real instances of databases, message brokers, or any other service your application depends on, making your tests
    more reliable and closer to real-world scenarios. We will use it to start our PostgresSQL database.
+   1. https://github.com/testcontainers/testcontainers-go
 3. **HTTPMock**: A simple HTTP mocking library that allows you to simulate HTTP interactions in your tests. It is useful
    when you want to mock responses from external HTTP services without actually making network requests.
-
+   1. https://github.com/jarcoal/httpmock
+    
 # Use case
 
 We will have 1 application that it’s in charge of executing the following logic:
