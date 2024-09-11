@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	servicebook "github.com/joseboretto/golang-crud-api/internal/application/services/books"
-	controller "github.com/joseboretto/golang-crud-api/internal/infrastructure/controllers"
-	controllerbook "github.com/joseboretto/golang-crud-api/internal/infrastructure/controllers/books"
+	servicebook "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/application/services/books"
+	controller "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/infrastructure/controllers"
+	controllerbook "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/infrastructure/controllers/books"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -14,8 +14,8 @@ import (
 	"log"
 	"net/http"
 
-	clientsbook "github.com/joseboretto/golang-crud-api/internal/infrastructure/clients/book"
-	persistancebook "github.com/joseboretto/golang-crud-api/internal/infrastructure/persistance/book"
+	clientsbook "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/infrastructure/clients/book"
+	persistancebook "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/infrastructure/persistance/book"
 )
 
 func main() {

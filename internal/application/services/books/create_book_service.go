@@ -3,7 +3,7 @@ package books
 import (
 	"errors"
 
-	"github.com/joseboretto/golang-crud-api/internal/domain/models"
+	"github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/domain/models"
 )
 
 type CreateBookService struct {

@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/joseboretto/golang-crud-api/internal/infrastructure/controllers/books"
+	"github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/infrastructure/controllers/books"
 )
 
 func SetupRoutes(bookController *books.Controller) {

@@ -1,4 +1,4 @@
-module github.com/joseboretto/golang-crud-api
+module github.com/joseboretto/golang-testcontainers-gherkin-setup
 
 go 1.23
 
@@ -43,6 +43,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/joseboretto/golang-crud-api v0.0.0-20231211211145-10137cad8ac0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

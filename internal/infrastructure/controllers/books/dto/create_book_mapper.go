@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/joseboretto/golang-crud-api/internal/domain/models"
+import "github.com/joseboretto/golang-testcontainers-gherkin-setup/internal/domain/models"
 
 func MapToBookModel(c *CreateBookRequest) *models.Book {
 	return &models.Book{

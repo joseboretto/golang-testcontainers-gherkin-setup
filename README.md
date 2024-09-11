@@ -1,4 +1,4 @@
-# golang-crud-api
+# golang-testcontainers-gherkin-setup
 
 # Resources
 
@@ -36,7 +36,7 @@ CHECK_ISBN_CLIENT_HOST=https://my-json-server.typicode.com/joseboretto/golang-te
 3. Run the application
 
 ```bash
-cd cmd/golang-crud-api
+cd cmd/golang-testcontainers-gherkin-setup
 go run main.go
 ```
 
