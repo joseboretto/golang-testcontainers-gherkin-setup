@@ -77,10 +77,10 @@ go get -u gorm.io/driver/postgres
 
 Now, we have to change a bit our main.go. Separate your main in 3 different functions.
 
-1`func mainHttpServerSetup(addr string, httpClient *http.Client) (*http.Server, func())`
+1. `func mainHttpServerSetup(addr string, httpClient *http.Client) (*http.Server, func())`
     - This function is used in testcontainers_config.go allowing us control the execution of the app in
       integration_test.go
-2`main()`
+2. `main()`
     - The entry point of the actual application.
 
 ```go
