@@ -38,7 +38,7 @@ Feature: Create book
       "title": "The Art of Computer Programming"
     }
     """
-    Then response status code is 200 and payload is
+    Then API response status code is 200 and payload is
     """json
     {
         "isbn": "0-061-96436-1",

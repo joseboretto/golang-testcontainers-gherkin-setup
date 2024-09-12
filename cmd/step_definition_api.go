@@ -14,7 +14,7 @@ import (
 func (s *StepsContext) RegisterApiSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^API "([^"]*)" request is sent to "([^"]*)" without payload$`, s.apiRequestIsSendWithoutPayload)
 	sc.Step(`^API "([^"]*)" request is sent to "([^"]*)" with payload$`, s.apiRequestIsSendWithPayload)
-	sc.Step(`^response status code is (\d+) and payload is$`, s.apiResponseIs)
+	sc.Step(`^API response status code is (\d+) and payload is$`, s.apiResponseIs)
 }
 
 func (s *StepsContext) apiRequestIsSendWithoutPayload(method, url string) error {
