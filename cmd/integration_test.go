@@ -42,7 +42,7 @@ func TestFeatures(t *testing.T) {
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			// This address should match the address of the app in the testcontainers_config.go file
 			mainHttpServerUrl := "http://localhost" + testcontainersConfig.Params.MainHttpServerAddress
-			NewStepsContext(mainHttpServerUrl, sc)
+			NewStepsContext(mainHttpServerUrl, testcontainersConfig.Database, sc)
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

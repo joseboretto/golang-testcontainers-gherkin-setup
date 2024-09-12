@@ -1,15 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/cucumber/godog"
-	"gorm.io/gorm"
 	"net/http"
 )
 
 type StepsContext struct {
 	// Main setup
 	mainHttpServerUrl string // http://localhost:8000
-	database          *gorm.DB
+	database          *sql.DB
 	// Mock server setup
 	stepMockServerRequestMethod *string
 	stepMockServerRequestUrl    *string
@@ -17,11 +17,10 @@ type StepsContext struct {
 	stepResponse                *http.Response
 }
 
-func NewStepsContext(mainHttpServerUrl string, sc *godog.ScenarioContext) *StepsContext {
-	db := getDatabaseConnection()
+func NewStepsContext(mainHttpServerUrl string, database *sql.DB, sc *godog.ScenarioContext) *StepsContext {
 	s := &StepsContext{
 		mainHttpServerUrl: mainHttpServerUrl,
-		database:          db,
+		database:          database,
 	}
 	// Register all the step definition function
 	s.RegisterMockServerSteps(sc)

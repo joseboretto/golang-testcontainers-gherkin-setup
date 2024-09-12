@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jarcoal/httpmock"
 	"github.com/testcontainers/testcontainers-go"
@@ -33,6 +34,7 @@ type TestContainersParams struct {
 
 type TestContainersContext struct {
 	MainHttpServer *http.Server
+	Database       *sql.DB
 	Params         *TestContainersParams
 }
 
@@ -60,6 +62,8 @@ func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
 	setEnvVars(params.EnvironmentVariables)
 	// Start the postgres container
 	initPostgresContainer(ctx, params)
+	// Create database connection
+	db := getDatabaseConnectionTestContainers(params)
 	// Mock the third-party API client
 	mockClient := &http.Client{}
 	httpmock.ActivateNonDefault(mockClient)
@@ -67,8 +71,23 @@ func NewMainWithTestContainers(ctx context.Context) *TestContainersContext {
 	server, _ := mainHttpServerSetup(params.MainHttpServerAddress, mockClient)
 	return &TestContainersContext{
 		MainHttpServer: server,
+		Database:       db,
 		Params:         params,
 	}
+}
+
+func getDatabaseConnectionTestContainers(params *TestContainersParams) *sql.DB {
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv(params.DatabaseHostEnvVar),
+		os.Getenv(params.DatabasePortEnvVar),
+		os.Getenv(params.DatabaseUserEnvVar),
+		os.Getenv(params.DatabasePasswordEnvVar),
+		os.Getenv(params.DatabaseNameEnvVar),
+	))
+	if err != nil {
+		log.Fatalf("failed to connect to database: %s", err)
+	}
+	return db
 }
 
 // initPostgresContainer starts a postgres container and sets the required environment variables.

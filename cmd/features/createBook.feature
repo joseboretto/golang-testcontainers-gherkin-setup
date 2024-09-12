@@ -45,3 +45,13 @@ Feature: Create book
         "title": "The Art of Computer Programming"
     }
     """
+    And SQL query "SELECT * FROM myschema.books WHERE isbn = '0-061-96436-1'" result without the fields "created_at,deleted_at,updated_at" is equal to
+    """json
+    [
+       {
+          "id":1,
+          "isbn":"0-061-96436-1",
+          "title":"The Art of Computer Programming"
+       }
+    ]
+    """
